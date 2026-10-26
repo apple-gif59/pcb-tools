@@ -112,7 +112,7 @@
   ```
   遍历库符号用 `Doc.SchLibIterator_Create` 加 `MkSet(eSchComponent)`，销毁用 `Doc.SchIterator_Destroy`。加之前先确认新名字不存在、新旧子对象数相同。回读用 MCP `get_symbol_primitives` 逐条对比新旧符号。
 - 改链：在 SchDoc 里对实例做 PreProcess + SCHM_BeginModify，写 `Comp.LibReference := '新名'; Comp.DesignItemId := '新名';`，EndModify、PostProcess、`Doc.GraphicallyInvalidate`。改链前后编译出的网表应完全一致。ECO 里只会多一行 "Change Component Design Item ID"，执行后 PCB 元件的 `SourceLibReference` 变成新名。
-- PCB 元件 `IPCB_Component` 没有 `SourceDesignItemID`，读它会卡死执行器；能读的是 `SourceFootprintLibrary`、`SourceComponentLibrary`、`SourceLibReference`、`FootprintDescription`。
+- PCB 元件 `IPCB_Component` 没有 `SourceDesignItemID`，读它报 `Undeclared identifier`；能读的是 `SourceFootprintLibrary`、`SourceComponentLibrary`、`SourceLibReference`、`FootprintDescription`。
 
 ## ECO（原理图 → PCB）
 

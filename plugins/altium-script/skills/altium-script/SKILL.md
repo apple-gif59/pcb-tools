@@ -17,8 +17,8 @@ description: Altium Designer 23 的 DelphiScript API 字典、写法模式和官
 2. **查 API**：脚本里用到的每个成员、全局函数、常量、进程名都用 `lookup` 查到过，才算写完。字典里本来就没有、不用查的只有两类：沙盒预置的变量、过程和常量（`ResultText`、`S1`、`Obj1`、`SandboxLog`、`REPLACEALL` 等，见 altium-mcp skill），记录类型的字段（`Location.X`，字典只有记录类型名）。`Inc`、`Break`、`Length`、`Nil`、`Result` 这类语言自带的名字，`lookup` 会说明。
    - `lookup PCBServer.GetCurrentPCBBoard.LayerColor`：按调用链逐段查，每段沿父接口链找，输出定义在哪一层和签名。点号前也可以直接写接口名（`lookup IPCB_Board.LayerColor`）。
    - 迭代器和工厂返回的是基类型：`FirstPCBObject`、`PCBObjectFactory` 返回 `IPCB_Primitive`，`FirstSchObject`、`SchObjectFactory` 返回 `ISch_BasicContainer`。调用链查到这里再往下，`Width` 这类成员在基类型上没有，`lookup` 会列出定义它的下层类型和继承它的类型（如 `IsHidden` 定义在 `ISch_ComplexText`，`ISch_Parameter` 继承它）；改查对象实际的类型，如 `lookup IPCB_Track.Width`。按下层类型接着往下查的链返回 1，改成具体类型再查一次才返回 0。
-   - 属性行尾有 `// read-only` 的不能赋值。例如 `IPCB_Board.LayerColor` 是只读的，赋值会卡死执行器；层颜色改用 `IPCB_SystemOptions.LayerColors_V6`。
-   - 查不到时看输出：如果别的接口上有同名成员，只是"可能能用"（见下文"字典怎么读"），要先在 AD 里试；如果哪个接口上都没有，就换一种写法。例外是已经实测过的：`Client.SendMessage`、`SchServer.ProcessControl` 能用，`lookup` 直接说明并返回 0；`ISch_Document.FileName` 读它会卡住执行器，`lookup` 会说明改用 `DocumentName`。
+   - 属性行尾有 `// read-only` 的不能赋值。例如 `IPCB_Board.LayerColor` 是只读的，赋值时沙盒抓不到错误，要等满超时；层颜色改用 `IPCB_SystemOptions.LayerColors_V6`。
+   - 查不到时看输出：如果别的接口上有同名成员，只是"可能能用"（见下文"字典怎么读"），要先在 AD 里试；如果哪个接口上都没有，就换一种写法。例外是已经实测过的：`Client.SendMessage`、`SchServer.ProcessControl` 能用，`lookup` 直接说明并返回 0；`ISch_Document.FileName` 读它会报错，`lookup` 会说明改用 `DocumentName`。
    - `var`/`out` 参数必须传变量。
    - `lookup PCB:Zoom`：进程名写错时 `RunProcess` 不报错、什么也不做，所以进程名也要查到才用。
    - 签名里的类型名（`TCoord`、`TLayer`）引擎没有单独注册，`lookup TCoord` 会说明这一点，不用再追。
@@ -48,8 +48,8 @@ description: Altium Designer 23 的 DelphiScript API 字典、写法模式和官
 
 - 示例里常见 `Client.SendMessage`、`SchServer.ProcessControl`：它们不在声明类型的接口上，但 altium-mcp 实测在 AD23 能用，`lookup` 会说明这两点。
 - 有的示例用到同名冲突的常量（见下文"同名常量"），或者字典里没有的名字（如 `InputQuery`），照抄前先 `lookup`。
-- 名字对得上，不代表行为没变。示例里的做法和 altium-mcp skill 的实测结论冲突时，以 altium-mcp 为准，例如：沙盒里 `Try/Finally` 不保证执行 `PostProcess`；脚本里调用 `DoFileSave` 会弹框。
-- 示例是完整程序（`Var` 声明、`ShowMessage`、窗体）。`run_altium_script` 只接受语句体，要改成用沙盒的预置变量，`Exit` 改成 `if ... then ... else`。
+- 名字对得上，不代表行为没变。示例里的做法和 altium-mcp skill 的实测结论冲突时，以 altium-mcp 为准，例如：沙盒里 `Try/Finally` 不保证执行 `PostProcess`。
+- 示例是完整程序（`Var` 声明、`ShowMessage`、窗体）。`run_altium_script` 只接受语句体（前面可以带 `var` 块），过程和函数要拆掉，`Exit` 改成 `if ... then ... else`。
 
 | 目录 | .pas 数 | 内容 |
 |---|---|---|
@@ -93,7 +93,7 @@ description: Altium Designer 23 的 DelphiScript API 字典、写法模式和官
 ## 字典怎么读
 
 - **成员不只看声明类型**：DelphiScript 不管变量的声明类型。实测 `Client.SendMessage` 能用，可 `SendMessage` 注册在 `IProcessLauncher` 上，不在 `IClient` 上；`SchServer.ProcessControl` 也能用，它注册在 `IServerModule`、`IClient` 上。看起来对象实现的其他接口上的成员也能调用，但引擎内部怎么查找没有确认过。所以按两种情况处理：
-  - 名字在哪个接口、类上都没有：一定不能用。例如 `SourceDesignItemID`，读它会卡死执行器。
+  - 名字在哪个接口、类上都没有：一定不能用。例如 `SourceDesignItemID`，读它报 `Undeclared identifier`。
   - 不在预期类型的继承链上，但别的接口上有：可能能用，先用小脚本试。
 - **继承**：md 里只把成员列在声明它的那一层，每节第一行给出继承链。`IPCB_Track.Layer` 定义在 `IPCB_Primitive`。
 - **只读**：属性注册时没有 setter，就是只读。反过来，能赋值不代表一定生效：`IPCB_Board.LayerIsDisplayed` 能赋值，但不影响显示（见 altium-mcp）。

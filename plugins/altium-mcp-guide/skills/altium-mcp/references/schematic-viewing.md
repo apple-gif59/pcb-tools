@@ -30,8 +30,8 @@
   - 覆盖剪贴板，运行前要告诉用户。
   - 把 AD 当前激活文档切到这一页。
   - 跑完 `modified_document_count` 仍为 0。不带参数的 `Sch:DeSelect` 能清掉全选，没有残留选中。
-- 它的沙盒和 MCP 的不是同一个：`sandbox_runner.py` 跑的是 `<MCP 仓库>\dev\sandbox\Sandbox.PrjScr`，但和 MCP 共用 `sandbox_log.txt` / `sandbox_result.json`，所以不能和其他 AD 脚本同时跑。成功后它会把 `dev\sandbox\Sandbox.pas` 恢复成占位内容。
-- 也可以完全走 MCP（PNG 和 render_sheet.py 的逐字节相同，出错时按 SKILL.md 的 Stop + Closer 处理）：
+- 它的沙盒和 MCP 的不是同一个：`sandbox_runner.py` 跑的是 `<MCP 仓库>\dev\sandbox\Sandbox.PrjScr`，日志和结果写在交换目录的 `sandbox_log.txt` / `sandbox_result.json`（v0.5.1 的 MCP 已不用这两个文件）。AD 同一时间只跑一个脚本，不要和其他 AD 脚本同时跑。成功后它会把 `dev\sandbox\Sandbox.pas` 恢复成占位内容。它出错时不会自动恢复，按 SKILL.md "出错恢复"里的手动步骤处理。
+- 也可以完全走 MCP（PNG 和 render_sheet.py 的逐字节相同，出错时 MCP 自动恢复）：
   1. 把 `render_sheet.py` 里 `PAS` 常量的内容交给 `run_altium_script`：`{DOC}` 换成路径，`{{`/`}}` 换成 `{`/`}`。
   2. `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\emf2png.ps1 -Emf <x.emf> -Png <x.png> -Width 8000`（就是 render_sheet.py 里的 PS 段，改成了参数）。输出目录要先建好，否则 EMF 写不出来、后面一串报错。
 
@@ -62,10 +62,10 @@
 
 - 网表：沙盒里按路径找到工程 → `DM_Compile` → 遍历 `DM_PhysicalDocuments(i).DM_Components(j).DM_Pins(k)`，取 `DM_PinNumber/DM_PinName/DM_FlattenedNetName`，要管脚电气类型再加 `DM_ElectricalString`，写到 MCP 交换目录下的文本文件。导出的是快照，原理图改了要重新导。
   - 文档名用 `DM_FileName`；三层循环的上界分别是 `DM_PhysicalDocumentCount`、`DM_ComponentCount`、`DM_PinCount`；写文件见 `pcb-scripting.md`。
-  - **工程不要用 `GetWorkspace.DM_FocusedProject` 取。** 沙盒脚本出错、跑完 `recover.ps1` 后紧接着读，拿到的是沙盒工程 `Sandbox.PrjScr`，编译后 `DM_PhysicalDocumentCount` 为 0，不报错；之后什么时候变回目标工程不确定。
+  - **工程不要用 `GetWorkspace.DM_FocusedProject` 取。** 它跟着焦点文档走：焦点在一个自由文档上时返回 `Free Documents`（实测），焦点在主页或别的工程时就是别的工程；v0.5.0 时沙盒出错后还会返回沙盒工程 `Sandbox.PrjScr`。拿错了工程，编译后 `DM_PhysicalDocumentCount` 为 0，不报错。
     改成遍历 `GetWorkspace.DM_Projects(I1)`（`I1` 从 0 到 `GetWorkspace.DM_ProjectCount - 1`），取 `DM_ProjectFullPath` 等于目标 `.PrjPcb` 完整路径的那个；一个都对不上（工程没打开）就别往下跑。
-  - `DM_Compile` 之后先看 `DM_PhysicalDocumentCount`，再取 `DM_PhysicalDocuments(0)`：数量为 0 时取下标，脚本跑不完（`executor_wedged`）。
-  - 管脚电气类型是 `DM_ElectricalString`，返回 `Passive` 这类字符串。没有 `DM_ElectricalTypeString`，写了会弹 "Error"、执行器卡住，按 SKILL.md "出错恢复"处理。
+  - `DM_Compile` 之后先看 `DM_PhysicalDocumentCount`，再取 `DM_PhysicalDocuments(0)`：数量为 0 时取下标会出错。
+  - 管脚电气类型是 `DM_ElectricalString`，返回 `Passive` 这类字符串。没有 `DM_ElectricalTypeString`，写了会报 `Undeclared identifier`（成员不存在，见 SKILL.md "沙盒规则"）。
   - 没起名字的网络，名字是 AD 自动起的 `Net<位号>_<管脚号>`，只连一个管脚的也一样，所以导出里没有空网络名。
   - 只查几个元件时，在找到的工程上调 `DM_DocumentFlattened` 拿到整个工程的扁平文档，遍历 `DM_Components(I)`，按 `DM_PhysicalDesignator` 找，读 `DM_LibraryReference`、`DM_Footprint`。
 - 图上的注释/网络标号：用 olefile 读 SchDoc 的 `FileHeader` 流（RECORD=4 文字、25 网络标号）。

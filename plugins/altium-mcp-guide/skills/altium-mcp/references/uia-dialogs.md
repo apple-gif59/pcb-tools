@@ -4,8 +4,8 @@ ECO、DRC 设置、Update PCB 这类模态对话框，MCP 和沙盒都点不了�
 
 ## 先知道的几件事
 
-- **对话框开着时，MCP 的调用会超时**（`get_screenshot` 也一样），而且 MCP 会为这次调用再拉起一个 X2 实例。它弹一个 "Information" 框（"There is another instance of running, but it is busy… try again later"，类名 `TMessageForm`），不关掉的话之后的 MCP 调用一直超时。
-  处理顺序：用 `uia_msg.ps1 -Title Information -ClickOK` 关掉它（多余的 X2 实例随之退出）→ 用 UIA 处理对话框 → `get_server_status` 加一个两行的小脚本，确认 MCP 恢复。
+- **对话框开着时，AD 不接 MCP 的请求**（`get_screenshot` 也一样）：v0.5.1 的工具约 20 秒后返回 "Altium did not start the command (not executed)"，`run_altium_script` 等满超时后报 "Altium never started the script"（读源码，见 SKILL.md "模态对话框"）。MCP 每次调用还会再拉起一个 X2 实例，它弹一个 "Information" 框（"There is another instance of running, but it is busy… try again later"，类名 `TMessageForm`）。MCP 放弃请求时会自己关掉这个框；还开着的话，用 `uia_msg.ps1 -Title Information -ClickOK` 关掉（多余的 X2 实例随之退出）。
+  处理顺序：关掉残留的 busy 框 → 用 UIA 处理对话框 → `get_server_status` 加一个两行的小脚本，确认 MCP 恢复。
 - 脚本都在本 skill 的 `scripts\`，用 Windows PowerShell 5.1 跑：
   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\<脚本> -Out <结果.txt> ...`
   结果写进 `-Out` 文件（UTF-8 带 BOM），再用 Read 看。

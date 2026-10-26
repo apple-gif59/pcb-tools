@@ -1,6 +1,6 @@
 {
   "name": "altium-mcp-guide",
-  "description": "altium MCP 的实战经验 skill：沙盒限制、出错和卡死的恢复、UIA 处理模态对话框、规则/Room/DRC、封装库和 ECO、从磁盘解析 PcbDoc。安装时会一并装上 altium-mcp 和 altium-script",
+  "description": "altium MCP 的实战经验 skill：沙盒限制、出错后的判断和恢复、UIA 处理模态对话框、规则/Room/DRC、封装库和 ECO、从磁盘解析 PcbDoc。安装时会一并装上 altium-mcp 和 altium-script",
   "author": { "name": "apple-gif59" },
   "keywords": ["altium", "delphiscript", "pcb", "mcp"],
   "dependencies": ["altium-mcp", "altium-script"]

@@ -38,14 +38,14 @@ BUILTINS = ('Abs', 'Assigned', 'Break', 'Copy', 'Dec', 'Delete', 'Exit', 'Inc', 
 UNTESTED = ('Result',)
 SANDBOX_NOTE = {
     'Exit': 'run_altium_script 的语句体里不要用：它直接离开沙盒的 Run 过程，结果不写盘，MCP 等满 timeout_seconds '
-            '后报 executor_wedged（实测执行器其实正常，下一次照常跑）。要跳过后面的语句用 if/else。',
+            '后报 no result 并自动恢复（实测）。要跳过后面的语句用 if/else。',
     'Result': '只能在函数里用；run_altium_script 只接受语句体，不能声明函数，那里没有 Result。',
 }
 
 # members that aren't on the declared type but altium-mcp ran successfully in AD23 -> the interface it resolves to
 MEASURED = {('iclient', 'sendmessage'): 'IProcessLauncher', ('isch_serverinterface', 'processcontrol'): 'IClient'}
 # members that aren't on the declared type and were tried in AD23 without success
-KNOWN_FAIL = {('isch_document', 'filename'): 'AD23 实测读 ISch_Document.FileName 会弹 Error、卡住执行器。'
+KNOWN_FAIL = {('isch_document', 'filename'): 'AD23 实测读 ISch_Document.FileName 会报错。'
                                              '原理图文档的完整路径用 DocumentName（实测）。'}
 # set elements the dictionary shows as bare ordinals; passed on their own they mean a different set
 CONST_NOTE = {
@@ -183,7 +183,7 @@ def missing_member(tbl, n, mem, fmtp):
                   '（如 Client.SendMessage 实测能用，它注册在 IProcessLauncher 上），先在 AD 里试：')
         print_rows(rows)
     else:
-        print('AD23 里没有任何接口或类有这个成员，脚本里不能用（读写不存在的属性会卡死执行器）。')
+        print('AD23 里没有任何接口或类有这个成员，脚本里不能用（读写不存在的成员报 Undeclared identifier）。')
     return rows, False
 
 

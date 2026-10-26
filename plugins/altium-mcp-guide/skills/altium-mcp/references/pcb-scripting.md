@@ -7,7 +7,7 @@
 - 层号：Top 1、Bottom 32、Top Overlay 33、Bottom Overlay 34、Top Paste 35、Bottom Paste 36、Mech1～16 = 57～72（MechN = 56 + N）、Multi-Layer 74。16 以上的机械层是 67108864 + N（如 M242 = 67109106）。也能直接写常量名（`eTopPaste`、`eMechanical13`）。
 - **`AddFilter_LayerSet(MkSet(eMechanical3, ...))` 不会按机械层过滤**，迭代器照样返回其他层的对象，包括封装里的图元。**`AddFilter_LayerSet(AllLayers)` 又会漏掉 16 以上的机械层**。迭代图元一律用 `Obj2.AddFilter_AllLayers;`，在循环里按 `Obj.Layer` 自己判断。
 - 读图元的层用 `Obj.Layer`；`Obj.V7Layer.ID` 会卡死执行器。层对象的 V7 号：`Board.LayerStack_V7.LayerObject_V7[eMechanical1].V7_LayerID.ID`。
-- **`Board.LayerColor[...]` 只能读，写入会让执行器卡死。**
+- **`Board.LayerColor[...]` 只能读，写入沙盒抓不到**（弹 Error，等满 `timeout_seconds` 后才自动恢复，v0.5.1 实测）。
   改层颜色用 `PCBServer.SystemOptions.LayerColors_V6[eMechanicalN] := $00BBGGRR;`。写入后 `Board.LayerColor` 会同步变化，再调用 `ViewManager_FullUpdate` 刷新显示。
 - 机械层：`Board.LayerStack_V7.LayerObject_V7[eMechanical1 + n - 1]`，可设 `.MechanicalLayerEnabled`、`.Name`。
 - `Board.LayerIsDisplayed[...]` 能赋值，但在 AD23 里不影响显示。只看一层：`Client.SendMessage('PCB:SetCurrentLayer', 'LayerName=TopPaste', 255, Client.CurrentView)`，再 `Client.SendMessage('PCB:SetupPreferences', 'SingleLayerMode=Toggle', 255, Client.CurrentView)`。这个开关在几种单层模式和正常显示之间循环，每发一次截图确认当前是哪种。

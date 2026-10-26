@@ -24,7 +24,7 @@
   | HoleSize 42 | `MinLimit/MaxLimit`（另有 `AbsoluteValues`、`Min/MaxPercent`） |
   | Height 50 | `MinHeight/MaxHeight/PreferedHeight` |
   | HoleToHole 52 | `Gap`、`NetScope`（默认是 DifferentNets，同网络的孔对不查） |
-  | MinimumSolderMaskSliver 53 | `MinSolderMaskSliver`（磁盘 `MINSOLDERMASKWIDTH`；写成 `MinSolderMaskWidth` 会卡死执行器） |
+  | MinimumSolderMaskSliver 53 | `MinSolderMaskSliver`（磁盘 `MINSOLDERMASKWIDTH`；写成 `MinSolderMaskWidth` 报 `Undeclared identifier`） |
   | SilkToSolderMask 54 | `SilkToMaskGap`、`IsClearanceToExposedCopper` |
   | BoardOutlineClearance 63 | `Gap`（反射只看到 `GetState_Gap`，但 `.Gap :=` 能赋值） |
 
@@ -45,7 +45,8 @@
   - `OnCopper` 和 `OnSignal` 都包括过孔和 keepout 区域；只要铜就写 `OnCopper and Not IsKeepOut`。
   - `HasFootprint('X')` 除了元件本身，还匹配该封装里的图元（走线、圆弧、丝印）。
   - 非金属化孔：`IsPad and (PadIsPlated = 'False') and OnMultiLayer`（或 `and Not IsSMTPin`）正好选中自由 NPTH 焊盘和元件里的 NPTH。只写 `PadIsPlated = 'False'` 会把 SMD 焊盘也选进来。
-- **非法关键字**（`IsSMDPad`、`Plated`、`IsPlated` 等）不会报错返回，而是每用一次弹一个标题为 "X2" 的框（MCP 自动关掉，结果里 `dismissed_dialog_titles: ["X2", …]`），表达式变成**几乎全选**。只要结果里关过 X2 框，这次的计数就作废。
+- **非法关键字**（`IsSMDPad`、`Plated`、`IsPlated` 等）在表达式求值时（如 `Scope1Includes`）弹 "Undeclared identifier: IsPlated at Line:..., Char:... Continue execution?" 框。v0.5.1 把它当运行时错误：按 Cancel 停掉脚本，返回 `"error": "run-time error"`，`altium_message` 里有关键字名（实测）。
+  **同一个 AD 会话里，同一个关键字只在第一次弹框**：再跑一次同样的脚本不弹框、照常跑完，表达式变成**几乎全选**（实测 5 个焊盘匹配 5 个）。所以表达式里的关键字要先用下面的临时规则测过；如果某次报过这种 `run-time error`，这个关键字以后的计数都作废。（v0.5.0 是每次弹一个标题为 "X2" 的框，MCP 关掉后脚本照常跑完。）
 - 测一个表达式选中了哪些对象：
   - 建一条临时规则（如 `PCBRuleFactory(0)`），`Scope1Expression := 表达式`，**`DRCEnabled := True`**，加到板上并发 BoardRegisteration，再迭代对象调 `Rule.Scope1Includes(Obj)` 计数，最后删掉规则。临时规则 `DRCEnabled := False` 时，`Scope1Includes`/`CheckUnaryScope` 恒为 False，连 `All` 都选不中。
   - 或者用 `FindDominantRuleForObjectPair(对象, 参照对象, eRule_Clearance)` 看主导规则是不是这条临时规则。

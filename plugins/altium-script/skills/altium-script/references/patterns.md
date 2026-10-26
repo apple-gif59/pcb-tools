@@ -9,11 +9,11 @@
 - **声明类型不影响运行**：`Var X;` 不写类型也能跑，成员按运行时的对象解析。写上类型（`Board : IPCB_Board;`）方便对照字典查成员：`lookup IPCB_Board.<成员>`。
 - **集合**用 `MkSet(eTrackObject, eArcObject)`，不写 `[...]`；`InSet(x, s)`、`SetUnion(a, b)`、`MkSetRange(lo, hi)`。`Format('%s=%d', [S, I])` 的参数是开放数组，照常写方括号。`StringReplace` 的 `Flags` 也是集合：写 `MkSet(rfReplaceAll)`，直接传 `rfReplaceAll`（= 0）只替换第一处，不报错（实测）；沙盒里也可以用预置常量 `REPLACEALL`。
 - **带下标的属性**：字典里写成 `property LayerColors_V6[L: TV6_Layer]` 的，读取时 `Opt.LayerColors_V6[eTopLayer]` 和 `Opt.LayerColors_V6(eTopLayer)` 都能用（实测）；赋值用 `[]`（altium-mcp 实测）。官方示例 `PCB/PCB Rules/ModifyWidthRules.pas` 赋值也写 `()`，AD23 上没测过。
-- **getter/setter 照字典写**：`LayerColors_V6` 的 getter 是 `GetState_LayerColors`，按属性名猜的 `GetState_LayerColors_V6` 不存在，调用会报错并卡住执行器（实测）。
+- **getter/setter 照字典写**：`LayerColors_V6` 的 getter 是 `GetState_LayerColors`，按属性名猜的 `GetState_LayerColors_V6` 不存在，调用报 `Undeclared identifier`（实测）。
 - **常量**只能是简单值。上游说明说不支持 `set of` 类型的常量，要用字符串加 `Pos` 代替（没实测）。
 - **完整脚本**（脚本工程里的 .pas）的入口是无参数的过程。File » Run Script 对话框只列出无参数的过程，辅助过程加一个哑参数（`Dummy : Integer`）就不会出现在列表里（上游说明）。
-- **命令行运行**：`X2.EXE -RScriptingSystem:RunScript(ProjectName="<.PrjScr 路径>"|ProcName="<单元名>><过程名>")`，altium-mcp 的 `recover.ps1` 就这样运行 `Closer>Run`（实测）。
-- **`run_altium_script`** 只接受语句体，用沙盒的预置变量；`try/except` 抓不到运行时错误，出错后 `finally` 也不执行（altium-mcp 实测）。所以先用几行的小脚本把每条语句跑通，再组装成循环。下文模板和示例里的 `Exit` 在语句体里不能用（结果不会写盘，见 altium-mcp），要改成 `if ... then ... else`。
+- **命令行运行**：脚本工程用 `X2.EXE -RScriptingSystem:RunScript(ProjectName="<.PrjScr 路径>"|ProcName="<单元名>><过程名>")`，单个 .pas 用 `X2.EXE -RScriptingSystem:RunScriptFile(FileName=<.pas 路径>|ProcName=<过程名>)`（altium-mcp 实测，v0.5.1 的 `run_altium_script` 就用后一种）。
+- **`run_altium_script`** 接受语句体，前面可以带 `var` 块，也可以用沙盒的预置变量。不存在的成员、在 nil 上调方法、类型转换错误会被沙盒抓到并报错；写只读属性这类错误抓不到，`finally` 也不执行（altium-mcp 实测）。所以先用几行的小脚本把每条语句跑通，再组装成循环。下文模板和示例里的 `Exit` 在语句体里不能用（结果不会写盘，见 altium-mcp），要改成 `if ... then ... else`。
 
 ## PCB
 
@@ -129,7 +129,7 @@ Doc.SchIterator_Destroy(Iter);
 
 - 迭代器返回 `ISch_BasicContainer`，循环里读的成员按实际类型查：元件 `lookup ISch_Component.<成员>`，参数 `lookup ISch_Parameter.<成员>`。
 - 元件的 Comment 也作为名为 `Comment` 的参数出现在 `eParameter` 子对象里；位号不是参数，是单独的 `eDesignator` 子对象（altium-mcp 实测）。
-- 文档的完整路径用 `Doc.DocumentName`；`ISch_Document` 没有 `FileName`，读它会卡住执行器（实测，`lookup` 会说明）。
+- 文档的完整路径用 `Doc.DocumentName`；`ISch_Document` 没有 `FileName`，读它会报错（实测，`lookup` 会说明）。
 - 只要顶层对象：`Iter.SetState_IterationDepth(eIterateFirstLevel)`。
 - 按区域：`Doc.ChooseRectangleInteractively(Rect, ...)` 取矩形（交互），`Iter.AddFilter_Area(Rect.Left, Rect.Bottom, Rect.Right, Rect.Top)`。
 - 符号库：`Lib.SchLibIterator_Create` 遍历库里的符号，用 `Lib.SchIterator_Destroy` 销毁。
@@ -153,7 +153,7 @@ Doc.SchIterator_Destroy(Iter);
       If CV.DM_VariationKind = eVariation_NotFitted Then ...
   ```
 - **Messages 面板**：`MM := GetWorkspace.DM_MessagesManager` → `ClearMessages` → `BeginUpdate` → `AddMessage(类别, 文本, 来源, 文档, 回调进程, 回调参数, 图标序号, False)` → `EndUpdate` → `GetWorkspace.DM_ShowMessageView`。
-- **打开文档**：`Client.ShowDocument(Client.OpenDocument('PCB', Path))`。不要在脚本里 `DoFileSave`，会弹 "A command is currently active"（altium-mcp）。
+- **打开文档**：`Client.ShowDocument(Client.OpenDocument('PCB', Path))`。保存用 `Doc.DoFileSave('')`，或沙盒的 `SaveDoc(路径)`（altium-mcp v0.5.1 实测不弹框；v0.5.0 会弹 "A command is currently active"）。
 
 ## 文件和对话框
 
@@ -167,10 +167,10 @@ Doc.SchIterator_Destroy(Iter);
 
 | 上游说法 | AD23 |
 |---|---|
-| `Board.LayerColor[L] :=` 改层颜色 | 只读，写入卡死执行器；用 `PCBServer.SystemOptions.LayerColors_V6[L]`（altium-mcp 实测） |
+| `Board.LayerColor[L] :=` 改层颜色 | 只读，写入抓不到、要等满超时；用 `PCBServer.SystemOptions.LayerColors_V6[L]`（altium-mcp 实测） |
 | `Board.LayerIsDisplayed[L] :=` 切换显示 | 能赋值，不影响显示（altium-mcp 实测） |
 | `AddFilter_LayerSet` 按层过滤 | 见上文"遍历" |
-| 模板用 `Try/Finally` 保证 `PostProcess`，`Try/Except` 抓错误 | 沙盒里都不可靠（altium-mcp 实测） |
+| 模板用 `Try/Finally` 保证 `PostProcess`，`Try/Except` 抓错误 | 只对部分错误有效：写只读属性这类错误两者都不执行（altium-mcp 实测） |
 | `DM_VariationType` | 不存在，用 `DM_VariationKind` |
 | `eRoomObject` | 不存在，Room 是规则（`eRuleObject`，`eRule_ConfinementConstraint`） |
 | `eDrillDrawingLayer` | 不存在，是 `eDrillDrawing` |
