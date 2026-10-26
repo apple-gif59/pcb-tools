@@ -6,6 +6,14 @@ Claude Code 插件商店：Altium Designer 自动化（MCP 服务和实战经验
 
 安装时要用 `git` 从 GitHub 克隆本仓库，以及 `altium-mcp` 的上游仓库，所以机器上要装有 git，并且能访问 GitHub。
 
+大部分插件要用 **Python**，`altium-mcp` 要 3.10 以上。Claude Code 和桌面版都不自带 Python，没装的先装一个，比如：
+
+```bash
+winget install Python.Python.3.13
+```
+
+也可以从 python.org 下载安装，安装时勾选「Add python.exe to PATH」。
+
 ## 插件
 
 | 插件 | 内容 | 会连带安装 | 另需准备 |
@@ -53,7 +61,8 @@ echo '{"python":"C:/Python313/python.exe"}' | claude plugin configure altium-mcp
 
 ## altium-mcp 的 Python 和首次启动
 
-- 在终端会话里用 `/plugin` 安装 `altium-mcp` 时，会让你填 **Python 解释器**。不填就用命令行里的 `python`。全新的 Windows 11 上，`python` 可能只是一个打开微软商店的占位程序，什么都跑不起来。这种情况请填 Python 3.10+ 的 `python.exe` 完整路径。装好后要改，可以在会话里执行 `/plugin configure altium-mcp@pcb-tools`，或者用上面终端里的 `claude plugin configure` 命令。不填时用的就是命令行里的 `python`（已实测）。
+- `altium-mcp` 的 **Python 解释器**是必填项，每台机器各填各的，存在本机 `%USERPROFILE%\.claude\settings.json` 的 `pluginConfigs` 里。命令行里的 `python` 能用就填 `python`。全新的 Windows 11 上，`python` 可能只是一个打开微软商店的占位程序，什么都跑不起来。这种情况请填 Python 3.10+ 的 `python.exe` 完整路径。在终端会话里用 `/plugin` 安装时会让你填。终端安装、作为依赖安装、桌面版安装可能不会问，装好后用 `/plugin configure altium-mcp@pcb-tools`，或者上面终端里的 `claude plugin configure` 命令补上。
+- 这一项没填时，`altium` MCP 不会启动。以前没设成必填时，配置项里的默认值并不会代入命令，Claude Code 会把 `${user_config.python}` 这串字面量当程序去执行，报「不是内部或外部命令」，界面上只显示 `Connection closed`（Claude Code 2.1.308 实测）。MCP 日志在 `%LOCALAPPDATA%\claude-cli-nodejs\Cache\<项目目录>\mcp-logs-plugin-altium-mcp-altium\`。
 - 第一次启动时，`start_server.py` 会在 `%USERPROFILE%\.altium-mcp\venvs\` 下建虚拟环境，并下载依赖（`mcp`、`pillow`、`pywin32`），一般要一两分钟，会超过 Claude Code 30 秒的连接超时。建环境的是一个分离出去的进程，但 Claude Code 超时结束 MCP 进程时，它也可能被一起结束（`claude mcp list` 的健康检查实测如此）。这时虚拟环境只建了一半，`%USERPROFILE%\.altium-mcp\build.log` 里最后只有一行时间戳，没有 `ready in N s`。遇到这种情况，就在终端里手动建一次（不受超时限制，`<版本>` 是 `altium-mcp` 下唯一的那个目录）：
 
   ```bash

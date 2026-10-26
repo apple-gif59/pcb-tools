@@ -16,7 +16,8 @@
         "python": {
           "type": "string",
           "title": "Python 解释器",
-          "description": "Python 3.10 以上的 python.exe。命令行里的 python 是微软商店占位程序或版本太低时，填 python.exe 的完整路径",
+          "description": "Python 3.10 以上的 python.exe，必填。命令行里的 python 能用就填 python；是微软商店占位程序或版本太低时，填 python.exe 的完整路径，如 C:/Python313/python.exe。没装 Python 先装一个（winget install Python.Python.3.13），Claude 不自带 Python",
+          "required": true,
           "default": "python"
         }
       },
