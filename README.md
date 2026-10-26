@@ -49,27 +49,21 @@ claude plugin marketplace add apple-gif59/pcb-tools
 claude plugin install pcb-all@pcb-tools --scope user
 ```
 
-终端安装不会问 Python 路径。`--config` 只对命令里写的那个插件生效：直接装 `altium-mcp` 时可以加 `--config python=<python.exe 的完整路径>`；装 `pcb-all`、`altium-mcp-guide`、`enclosure-dwg-import` 时，`altium-mcp` 是作为依赖装上的，`--config` 不会传给它（CLI 会提示 `--config not applied`）。这时装完再单独设置（路径用正斜杠，反斜杠在 JSON 里要写成 `\\`）：
-
-```bash
-echo '{"python":"C:/Python313/python.exe"}' | claude plugin configure altium-mcp@pcb-tools --values-stdin
-```
-
-不带 `--values-stdin` 执行 `claude plugin configure altium-mcp@pcb-tools` 可以查看当前是否已设置。装完或改完后重开 Claude Code，或者在会话里执行 `/reload-plugins`。
+装完后重开 Claude Code，或者在会话里执行 `/reload-plugins`。
 
 **桌面版 Code 标签页：** 点输入框旁的 **+** → **Add plugins**，在插件浏览器里选插件和安装范围。浏览器里只列出已添加商店里的插件。官方文档没写桌面版怎么添加商店。可以在装了 Claude Code 命令行的终端里，执行上面的 `claude plugin marketplace add`，终端和桌面版本地会话用的是同一份设置。（这条未实测。）
 
 ## altium-mcp 的 Python 和首次启动
 
-- `altium-mcp` 的 **Python 解释器**是必填项，每台机器各填各的，存在本机 `%USERPROFILE%\.claude\settings.json` 的 `pluginConfigs` 里。命令行里的 `python` 能用就填 `python`。全新的 Windows 11 上，`python` 可能只是一个打开微软商店的占位程序，什么都跑不起来。这种情况请填 Python 3.10+ 的 `python.exe` 完整路径。在终端会话里用 `/plugin` 安装时会让你填。终端安装、作为依赖安装、桌面版安装可能不会问，装好后用 `/plugin configure altium-mcp@pcb-tools`，或者上面终端里的 `claude plugin configure` 命令补上。
-- 这一项没填时，`altium` MCP 不会启动。以前没设成必填时，配置项里的默认值并不会代入命令，Claude Code 会把 `${user_config.python}` 这串字面量当程序去执行，报「不是内部或外部命令」，界面上只显示 `Connection closed`（Claude Code 2.1.308 实测）。MCP 日志在 `%LOCALAPPDATA%\claude-cli-nodejs\Cache\<项目目录>\mcp-logs-plugin-altium-mcp-altium\`。
+- `altium` MCP 用 `PATH` 里的 `python` 启动，没有配置项。所以要保证在终端里执行 `python --version` 能看到 3.10 以上的版本。全新的 Windows 11 上，`python` 可能只是一个打开微软商店的占位程序，什么都跑不起来。遇到这种情况，就装一个 Python 并加进 `PATH`，再到「设置 → 应用 → 高级应用设置 → 应用执行别名」里关掉 `python.exe` 和 `python3.exe` 两项。改完 `PATH` 要重开 Claude Code。
+- 以前这里用过 `userConfig` 让用户填 Python 路径，但桌面版和以依赖方式安装时都不会弹出填写框，默认值也不会代入命令。结果 Claude Code 把 `${user_config.python}` 这串字面量当程序去执行，报「不是内部或外部命令」，界面上只显示 `Connection closed`（加了 `required: true` 也一样，桌面版实测），所以改成了直接用 `python`。MCP 日志在 `%LOCALAPPDATA%\claude-cli-nodejs\Cache\<项目目录>\mcp-logs-plugin-altium-mcp-altium\`。
 - 第一次启动时，`start_server.py` 会在 `%USERPROFILE%\.altium-mcp\venvs\` 下建虚拟环境，并下载依赖（`mcp`、`pillow`、`pywin32`），一般要一两分钟，会超过 Claude Code 30 秒的连接超时。建环境的是一个分离出去的进程，但 Claude Code 超时结束 MCP 进程时，它也可能被一起结束（`claude mcp list` 的健康检查实测如此）。这时虚拟环境只建了一半，`%USERPROFILE%\.altium-mcp\build.log` 里最后只有一行时间戳，没有 `ready in N s`。遇到这种情况，就在终端里手动建一次（不受超时限制，`<版本>` 是 `altium-mcp` 下唯一的那个目录）：
 
   ```bash
   python "$USERPROFILE/.claude/plugins/cache/pcb-tools/altium-mcp/<版本>/start_server.py" --build
   ```
 
-  输出 `ready in N s` 就是装好了，然后在 `/mcp` 里重连。这里的 `python` 要和 MCP 配置的解释器是同一个，否则建出来的虚拟环境对不上。
+  输出 `ready in N s` 就是装好了，然后在 `/mcp` 里重连。这里的 `python` 要和 MCP 启动时用的是同一个（都是 `PATH` 里的第一个），否则建出来的虚拟环境对不上。
 - AD 的安装路径会自动查找，结果存在 `%USERPROFILE%\.altium-mcp\config.json`。这个目录在插件目录外面，插件更新时不受影响。
 
 ## 更新
@@ -109,7 +103,7 @@ plugins/pcb-all/                    只有 plugin.json，用 dependencies 列出
 
 - 改了 skill，提交推送就行，不用改版本号。`claude plugin validate` 报 "No version specified"，是因为故意没写 `version`。
 - 校验命令：`claude plugin validate .`，以及 `claude plugin validate plugins/<插件名>`。
-- `altium-mcp` 条目里的 `mcpServers` 和 `userConfig` 之所以生效，是因为上游仓库没有 `.claude-plugin/plugin.json`。上游哪天自己加了 `plugin.json`，这两项就会被忽略，以上游的清单为准，到时要重新检查。
+- `altium-mcp` 条目里的 `mcpServers` 之所以生效，是因为上游仓库没有 `.claude-plugin/plugin.json`。上游哪天自己加了 `plugin.json`，这一项就会被忽略，以上游的清单为准，到时要重新检查。
 - 上游的每个提交都会直接推给用户。想锁定版本，就在 `source` 里加 `"ref": "<tag>"`。
 
 ## 许可
