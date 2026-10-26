@@ -1,0 +1,7 @@
+{
+  "name": "lcsc-datasheet",
+  "description": "按立创（LCSC/JLC）C 编号或型号查料、下载元器件数据手册 PDF 并渲染阅读。需要能访问立创网站；安装时会一并装上 doc-image-viewing",
+  "author": { "name": "apple-gif59" },
+  "keywords": ["lcsc", "jlc", "datasheet", "bom"],
+  "dependencies": ["doc-image-viewing"]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "enclosure-dwg-import",
+  "description": "把外壳结构 DWG（板框、挖空、通孔、禁布区、限高区、印碳区）转进 Altium PCB 的整套脚本和做法。需要 AutoCAD 的 accoreconsole 和 Python 3.11+；安装时会一并装上 altium-mcp-guide 及其依赖",
+  "author": { "name": "apple-gif59" },
+  "keywords": ["altium", "dwg", "autocad", "enclosure", "pcb"],
+  "dependencies": ["altium-mcp-guide"]
+}

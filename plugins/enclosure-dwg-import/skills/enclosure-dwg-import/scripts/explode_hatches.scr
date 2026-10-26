@@ -1,0 +1,4 @@
+(defun c:XH ( / ss f i h d hd lst e) (setvar "CMDECHO" 0) (setq ss (ssget "X" '((0 . "HATCH")))) (setq f (open "@@OUT@@" "w")) (setq i 0) (while (and ss (< i (sslength ss))) (setq h (ssname ss i)) (setq hd (cdr (assoc 5 (entget h)))) (setq lst (entlast)) (command "_.EXPLODE" h) (setq e (entnext lst)) (while e (setq d (entget e)) (cond ((= (cdr (assoc 0 d)) "LINE") (write-line (strcat "L " hd " " (rtos (nth 1 (assoc 10 d)) 2 6) " " (rtos (nth 2 (assoc 10 d)) 2 6) " " (rtos (nth 1 (assoc 11 d)) 2 6) " " (rtos (nth 2 (assoc 11 d)) 2 6)) f)) (T (write-line (strcat "O " hd " " (cdr (assoc 0 d))) f))) (setq e (entnext e))) (setq i (1+ i))) (close f) (princ (strcat "\nHATCHES " (if ss (itoa (sslength ss)) "0"))) (princ))
+XH
+QUIT
+Y

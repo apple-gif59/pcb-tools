@@ -1,0 +1,13 @@
+{
+  "name": "pcb-all",
+  "description": "一次装上本商店的全部插件：altium-mcp、altium-script、altium-mcp-guide、enclosure-dwg-import、doc-image-viewing、lcsc-datasheet",
+  "author": { "name": "apple-gif59" },
+  "dependencies": [
+    "altium-mcp",
+    "altium-script",
+    "altium-mcp-guide",
+    "enclosure-dwg-import",
+    "doc-image-viewing",
+    "lcsc-datasheet"
+  ]
+}

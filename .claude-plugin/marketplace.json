@@ -1,0 +1,61 @@
+{
+  "name": "pcb-tools",
+  "owner": { "name": "apple-gif59" },
+  "description": "Altium Designer 自动化、外壳 DWG 导入、立创数据手册查询和 PDF/图片阅读的 Claude Code 插件，均需在 Windows 上运行",
+  "plugins": [
+    {
+      "name": "altium-mcp",
+      "description": "Altium Designer 的 MCP 服务，直接安装上游 coffeenmusic/altium-mcp 的最新提交。仅支持 Windows，需要 Altium Designer 和 Python 3.10+",
+      "author": { "name": "Stephen Thompson", "url": "https://github.com/coffeenmusic" },
+      "homepage": "https://github.com/coffeenmusic/altium-mcp",
+      "repository": "https://github.com/coffeenmusic/altium-mcp",
+      "license": "MIT",
+      "category": "altium",
+      "source": { "source": "github", "repo": "coffeenmusic/altium-mcp" },
+      "userConfig": {
+        "python": {
+          "type": "string",
+          "title": "Python 解释器",
+          "description": "Python 3.10 以上的 python.exe。命令行里的 python 是微软商店占位程序或版本太低时，填 python.exe 的完整路径",
+          "default": "python"
+        }
+      },
+      "mcpServers": {
+        "altium": {
+          "command": "${user_config.python}",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/start_server.py"]
+        }
+      }
+    },
+    {
+      "name": "altium-script",
+      "category": "altium",
+      "source": "./plugins/altium-script"
+    },
+    {
+      "name": "altium-mcp-guide",
+      "category": "altium",
+      "source": "./plugins/altium-mcp-guide"
+    },
+    {
+      "name": "enclosure-dwg-import",
+      "category": "altium",
+      "source": "./plugins/enclosure-dwg-import"
+    },
+    {
+      "name": "doc-image-viewing",
+      "category": "documents",
+      "source": "./plugins/doc-image-viewing"
+    },
+    {
+      "name": "lcsc-datasheet",
+      "category": "documents",
+      "source": "./plugins/lcsc-datasheet"
+    },
+    {
+      "name": "pcb-all",
+      "category": "bundle",
+      "source": "./plugins/pcb-all"
+    }
+  ]
+}

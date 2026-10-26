@@ -1,0 +1,6 @@
+{
+  "name": "doc-image-viewing",
+  "description": "在 Windows 上把 PDF 任意页渲染成高清 PNG、裁剪放大大图、解析旧版 .doc/.xls，只用系统自带组件，不需要 Office 或 pdftoppm",
+  "author": { "name": "apple-gif59" },
+  "keywords": ["pdf", "image", "datasheet", "windows"]
+}

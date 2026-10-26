@@ -1,0 +1,6 @@
+{
+  "name": "altium-script",
+  "description": "Altium Designer 23 的 DelphiScript API 字典 skill：从 AD23 脚本引擎注册表提取的接口和类成员签名、属性是否只读、常量和枚举的实际值、进程（菜单命令）名和参数，附 lookup 查询脚本、写法模式和官方示例脚本",
+  "author": { "name": "apple-gif59" },
+  "keywords": ["altium", "delphiscript", "api", "ad23"]
+}
