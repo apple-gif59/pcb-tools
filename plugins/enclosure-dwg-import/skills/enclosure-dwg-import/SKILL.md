@@ -18,7 +18,7 @@ description: 把外壳结构 DWG（板框、挖空、通孔、禁布区、限高
 | `pas\import_drawing.pas`、`import_cutouts.pas`、`import_rules.pas` | 导入 AD 的模板，`shell_import.py` 填好路径后写进工作目录 |
 | `dxflib.py`、`regions.py`、`canvas.py` | DXF 读取和 HATCH 边界解析、填充区域重建、PNG 预览 |
 
-- 要 Python 3.11 以上（用 `tomllib`），只用标准库；`compare_pcbdoc.py` 另要 `olefile`。PowerShell 脚本用 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ...` 跑。
+- 要 Python 3.11 以上（用 `tomllib`），只用标准库；`compare_pcbdoc.py` 另要 `olefile`。PowerShell 脚本用 PowerShell 7 跑：`pwsh -NoProfile -ExecutionPolicy Bypass -File ...`。
 - 工作目录放临时目录（scratchpad），路径只能是 ASCII（写进 `.scr` 里）。中间数据不要放进工程，也不要放 MCP 的交换目录。
 - accoreconsole 默认取 `C:\Program Files\Autodesk\AutoCAD *\accoreconsole.exe` 里最新的一个。
 

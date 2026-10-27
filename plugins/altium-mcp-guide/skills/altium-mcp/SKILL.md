@@ -15,7 +15,7 @@ description: 通过 altium MCP 操作 Altium Designer 23 的实测经验：run_a
   下文的 `<AD 安装目录>` 就是 `$x2` 所在的目录（rcs 文件、SDK dll 在它的 `System\` 下）。
 - **MCP 仓库**：MCP 服务进程的命令行里有 `<MCP 仓库>\server\main.py`（`Get-CimInstance Win32_Process -Filter "Name like 'python%'"` 查 `CommandLine`）。MCP 工具的行为拿不准时，读 `server\main.py`（docstring）和 `server\AltiumScript\*.pas`。
 - **MCP 的交换目录** `C:\Users\Public\altium_mcp\`（`main.py` 里写死的，AD 和 MCP 都能读写）：`runs\`（`run_altium_script` 每次运行的 `.pas`、`_log.txt`、`_result.txt`，只留最近 20 份）、`temp_*.json`、`mcp_script_stuck.txt`（MCP 自己启动的脚本卡住时才有）、`last_project.txt` 等。
-- 本 skill 的 `scripts\`：出错恢复、UIA 操作对话框、截图、EMF 转 PNG、从磁盘读规则和高度、PcbDoc 比对。用法见各参考文件。PowerShell 脚本都是在 Windows PowerShell 5.1 下实测的，用它跑：`powershell.exe -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\<脚本> -Out <结果.txt> ...`。
+- 本 skill 的 `scripts\`：出错恢复、UIA 操作对话框、截图、EMF 转 PNG、从磁盘读规则和高度、PcbDoc 比对。用法见各参考文件。PowerShell 脚本用 PowerShell 7 跑：`pwsh -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\<脚本> -Out <结果.txt> ...`。
 - **altium-script skill**：AD23 的 API 字典、进程表、写法模式和官方示例。成员、常量、进程名用它的 `scripts\lookup.py` 查，用法见它的 SKILL.md。本 skill 管"跑起来实际怎样、出错怎么办"，它管"有什么、签名和值是什么"。
 
 ## 沙盒（run_altium_script）规则
@@ -71,7 +71,7 @@ description: 通过 altium MCP 操作 Altium Designer 23 的实测经验：run_a
 - **`compile error`、`run-time error`、`no result after N s` 这三类，MCP 会自动恢复**：关掉 AD 的错误框（只关脚本错误框和只有 OK 的 Error/Information 框，Confirm、Warning 不动）→ 发 `-REditScript:Stop` → 跑一个探针脚本。返回里 `recovery.recovered: true`、`executor_wedged: false` 就直接接着用（实测这三类之后，下一个脚本都正常）。`script error` 不需要恢复；最后两类 MCP 什么都不动。
 - 只有 `executor_wedged: true`（自动恢复失败）才要手动：
   - 先用 `scripts\uia_top.ps1` 看有没有模态框（含主窗口下类名为 `Window` 的 WPF 子窗口），有就按 `references/uia-dialogs.md` 处理。模态框开着时不要发外部命令，它会再拉起一个 X2 进程。
-  - 没有模态框就跑 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\recover.ps1`：用正在运行的 X2（见"定位 AD 和 MCP"）发 `-REditScript:Stop`；`-DryRun` 只打印路径。
+  - 没有模态框就跑 `pwsh -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\recover.ps1`：用正在运行的 X2（见"定位 AD 和 MCP"）发 `-REditScript:Stop`；`-DryRun` 只打印路径。
   - 然后跑一个两行的小脚本确认执行器正常。
 
 ## 模态对话框

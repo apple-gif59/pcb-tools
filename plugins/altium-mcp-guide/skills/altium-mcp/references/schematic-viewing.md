@@ -15,7 +15,7 @@
   - 每页几秒（脚本里有 1.2 秒 Sleep），输出宽度按第三个参数，高度按图上对象的外接框比例。
   - 从 Bash/PowerShell 工具调用时把超时设到 450 秒（它内部最多等沙盒 180 秒、栅格化 200 秒）。默认 120 秒会把 Python 杀掉，而 AD 里的脚本照跑。
   - EMF 和注入的脚本留在系统临时目录（Python 的 `tempfile.gettempdir()`）里的 `render_sheet.emf`、`render_sheet.pas`，每次覆盖。
-- 原理：沙盒里 `ShowDocument` → `Sch:Select(Action=All)` → `Sch:Copy` → `Sch:DeSelect`，AD 把整页以 EMF 图元文件放进剪贴板；再用 Windows PowerShell 5.1 的 System.Drawing 把 EMF 画成 PNG。
+- 原理：沙盒里 `ShowDocument` → `Sch:Select(Action=All)` → `Sch:Copy` → `Sch:DeSelect`，AD 把整页以 EMF 图元文件放进剪贴板；再用 PowerShell 的 System.Drawing 把 EMF 画成 PNG。
   不依赖窗口、前台或重绘状态。
 - 效果：
   - 用的是 AD 自己的绘图：中文注释、自定义标题栏里的中文、特殊字符串（图号显示工程名、页名）都正确。
@@ -33,7 +33,7 @@
 - 它的沙盒和 MCP 的不是同一个：`sandbox_runner.py` 跑的是 `<MCP 仓库>\dev\sandbox\Sandbox.PrjScr`，日志和结果写在交换目录的 `sandbox_log.txt` / `sandbox_result.json`（v0.5.1 的 MCP 已不用这两个文件）。AD 同一时间只跑一个脚本，不要和其他 AD 脚本同时跑。成功后它会把 `dev\sandbox\Sandbox.pas` 恢复成占位内容。它出错时不会自动恢复，按 SKILL.md "出错恢复"里的手动步骤处理。
 - 也可以完全走 MCP（PNG 和 render_sheet.py 的逐字节相同，出错时 MCP 自动恢复）：
   1. 把 `render_sheet.py` 里 `PAS` 常量的内容交给 `run_altium_script`：`{DOC}` 换成路径，`{{`/`}}` 换成 `{`/`}`。
-  2. `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\emf2png.ps1 -Emf <x.emf> -Png <x.png> -Width 8000`（就是 render_sheet.py 里的 PS 段，改成了参数）。输出目录要先建好，否则 EMF 写不出来、后面一串报错。
+  2. `pwsh -NoProfile -ExecutionPolicy Bypass -File <本 skill 目录>\scripts\emf2png.ps1 -Emf <x.emf> -Png <x.png> -Width 8000`（就是 render_sheet.py 里的 PS 段，改成了参数）。输出目录要先建好，否则 EMF 写不出来、后面一串报错。
 
 ## AD 截图和缩放
 
